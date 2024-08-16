@@ -20,6 +20,8 @@ app.use(cors());
 
 // Use the custom request logger middleware
 app.use(middleware.requestLogger);
+// For the token
+app.use(middleware.tokenExtractor);
 
 morgan.token("body", (req) => {
     return JSON.stringify(req.body);

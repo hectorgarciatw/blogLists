@@ -1,8 +1,41 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
 const router = express.Router();
+
+router.post("/login", async (request, response, next) => {
+    try {
+        const { username, password } = request.body;
+
+        const user = await User.findOne({ username });
+        if (!user) {
+            return response.status(401).json({ error: "Invalid username or password" });
+        }
+
+        const isPasswordCorrect = await bcrypt.compare(password, user.password);
+        if (!isPasswordCorrect) {
+            return response.status(401).json({ error: "Invalid username or password" });
+        }
+
+        const userForToken = {
+            username: user.username,
+            id: user._id,
+        };
+
+        // Generate the token with 60 minutes of life
+        const token = jwt.sign(userForToken, process.env.SECRET, { expiresIn: "1h" });
+
+        response.status(200).json({
+            token,
+            username: user.username,
+            name: user.name,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
 
 router.get("/", async (request, response, next) => {
     try {
@@ -42,26 +75,6 @@ router.post("/users", async (request, response, next) => {
 
         const savedUser = await user.save();
         response.status(201).json(savedUser);
-    } catch (error) {
-        next(error);
-    }
-});
-
-router.post("/login", async (request, response, next) => {
-    try {
-        const { username, password } = request.body;
-
-        const user = await User.findOne({ username });
-        if (!user) {
-            return response.status(401).json({ error: "Invalid username or password" });
-        }
-
-        const isPasswordCorrect = await user.comparePassword(password);
-        if (!isPasswordCorrect) {
-            return response.status(401).json({ error: "Invalid username or password" });
-        }
-
-        response.status(200).json({ message: "Login successful" });
     } catch (error) {
         next(error);
     }

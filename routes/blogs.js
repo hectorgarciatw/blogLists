@@ -2,6 +2,8 @@ const express = require("express");
 const Blog = require("../models/blog");
 const User = require("../models/user");
 
+const { tokenExtractor, userExtractor } = require("../utils/middleware");
+
 const router = express.Router();
 
 // GET route to fetch all blogs
@@ -33,30 +35,33 @@ router.delete("/:id", async (request, response, next) => {
 });
 
 // POST route to create a new blog
-router.post("/", async (request, response, next) => {
+router.post("/", tokenExtractor, userExtractor, async (request, response, next) => {
     try {
         const { title, author, url, likes } = request.body;
 
-        // The fist user in DB is the owner
-        const user = await User.findOne({});
+        // Verificar que el usuario está presente en la solicitud
+        const user = request.user;
         if (!user) {
-            return response.status(400).json({ error: "No users found in the database" });
+            return response.status(401).json({ error: "Token missing or invalid" });
         }
 
+        // Crear un nuevo blog con la información recibida
         const blog = new Blog({
             title,
             author,
             url,
-            likes,
-            user: user._id,
+            likes: likes || 0, // likes es opcional, por defecto será 0
+            user: user.id, // Asociar el blog al usuario autenticado
         });
 
+        // Guardar el blog en la base de datos
         const savedBlog = await blog.save();
 
-        // Add the blog in the user array
+        // Asociar el nuevo blog con el usuario y guardar el usuario
         user.blogs = user.blogs.concat(savedBlog._id);
         await user.save();
 
+        // Devolver el blog creado como respuesta
         response.status(201).json(savedBlog);
     } catch (error) {
         next(error);
