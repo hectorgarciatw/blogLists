@@ -6,7 +6,8 @@ const mongoose = require("mongoose");
 const logger = require("./utils/logger");
 const config = require("./utils/config");
 const blogsRouter = require("./routes/blogs");
-const middleware = require("./utils/middleware"); // Importar los middlewares
+const usersRouter = require("./routes/users");
+const middleware = require("./utils/middleware");
 
 // Load environment for MongoDB password
 require("dotenv").config();
@@ -39,8 +40,10 @@ mongoose
         process.exit(1);
     });
 
-// Use the blogsRouter for all routes under /api/blogs
+// routes under /api/blogs
 app.use("/api/blogs", blogsRouter);
+//  routes under /api/users
+app.use("/api/users", usersRouter);
 
 // Use the unknown endpoint middleware
 app.use(middleware.unknownEndpoint);

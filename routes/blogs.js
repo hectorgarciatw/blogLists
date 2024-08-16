@@ -1,15 +1,18 @@
 const express = require("express");
 const Blog = require("../models/blog");
+const User = require("../models/user");
 
 const router = express.Router();
 
 // GET route to fetch all blogs
 router.get("/", async (request, response, next) => {
     try {
-        const blogs = await Blog.find({});
+        // Obtener todos los blogs y popular el campo 'user'
+        const blogs = await Blog.find({}).populate("user", "username name");
+
         response.json(blogs);
     } catch (error) {
-        next(error); // Pass any errors to the error handler
+        next(error);
     }
 });
 
@@ -23,20 +26,40 @@ router.delete("/:id", async (request, response, next) => {
             return response.status(404).json({ error: "Blog not found" });
         }
 
-        response.status(204).end(); // Successful deletion returns 204 No Content
+        response.status(204).end();
     } catch (error) {
-        next(error); // Pass any errors to the error handler
+        next(error);
     }
 });
 
 // POST route to create a new blog
 router.post("/", async (request, response, next) => {
     try {
-        const blog = new Blog(request.body);
+        const { title, author, url, likes } = request.body;
+
+        // The fist user in DB is the owner
+        const user = await User.findOne({});
+        if (!user) {
+            return response.status(400).json({ error: "No users found in the database" });
+        }
+
+        const blog = new Blog({
+            title,
+            author,
+            url,
+            likes,
+            user: user._id,
+        });
+
         const savedBlog = await blog.save();
+
+        // Add the blog in the user array
+        user.blogs = user.blogs.concat(savedBlog._id);
+        await user.save();
+
         response.status(201).json(savedBlog);
     } catch (error) {
-        next(error); // Pass any errors to the error handler
+        next(error);
     }
 });
 
