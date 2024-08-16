@@ -4,10 +4,9 @@
     "description": "Repository with the activities of the part 3 belonging to the FullStack Web Development course provided by the University of Helsinki",
     "main": "index.js",
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "start": "node index.js",
-        "dev": "nodemon index.js",
-        "test": "node --test"
+        "test": "cross-env  NODE_ENV=test node --test",
+        "start": "cross-env NODE_ENV=production node index.js",
+        "dev": "cross-env NODE_ENV=development nodemon index.js"
     },
     "repository": {
         "type": "git",
@@ -27,5 +26,9 @@
         "morgan": "^1.10.0",
         "nodemon": "^3.1.4",
         "path": "^0.12.7"
+    },
+    "devDependencies": {
+        "cross-env": "^7.0.3",
+        "supertest": "^7.0.0"
     }
 }

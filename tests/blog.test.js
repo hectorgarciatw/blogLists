@@ -1,12 +1,90 @@
 const { test, describe } = require("node:test");
 const assert = require("node:assert");
 const listHelper = require("../utils/list_helper");
+const request = require("supertest");
+const mongoose = require("mongoose");
+const app = require("../index");
+const Blog = require("../models/blog");
 
 test("dummy returns one", () => {
     const blogs = [];
-
     const result = listHelper.dummy(blogs);
     assert.strictEqual(result, 1);
+});
+
+describe("GET /api/blogs", () => {
+    beforeEach(async () => {
+        await Blog.deleteMany({});
+    });
+
+    it("should return blogs with id instead of _id", async () => {
+        const newBlog = new Blog({
+            title: "Test Blog",
+            author: "Test Author",
+            url: "http://testurl.com",
+            likes: 5,
+        });
+
+        await newBlog.save();
+
+        const response = await request(app).get("/api/blogs");
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body).toHaveLength(1);
+        expect(response.body[0].id).toBeDefined();
+        expect(response.body[0]._id).toBeUndefined();
+    });
+
+    afterAll(() => {
+        mongoose.connection.close();
+    });
+});
+
+describe("PUT /api/blogs/:id/likes", () => {
+    let initialBlog;
+
+    beforeEach(async () => {
+        await Blog.deleteMany({});
+
+        // Insert a blog entry
+        initialBlog = new Blog({
+            title: "Test Blog",
+            author: "Test Author",
+            url: "http://testurl.com",
+            likes: 10,
+        });
+
+        await initialBlog.save();
+    });
+
+    it("should update the likes of the specified blog", async () => {
+        const newLikes = 20;
+
+        const response = await request(app).put(`/api/blogs/${initialBlog._id}/likes`).send({ likes: newLikes });
+
+        expect(response.statusCode).toBe(200);
+        expect(response.body.likes).toBe(newLikes);
+    });
+
+    it("should return 404 if the blog is not found", async () => {
+        const nonExistentId = new mongoose.Types.ObjectId();
+        const response = await request(app).put(`/api/blogs/${nonExistentId}/likes`).send({ likes: 15 });
+
+        expect(response.statusCode).toBe(404);
+        expect(response.body.error).toBe("Blog not found");
+    });
+
+    it("should return 400 if likes is not a number", async () => {
+        const invalidLikes = "not-a-number";
+
+        const response = await request(app).put(`/api/blogs/${initialBlog._id}/likes`).send({ likes: invalidLikes });
+
+        expect(response.statusCode).toBe(400);
+    });
+
+    afterAll(async () => {
+        await mongoose.connection.close();
+    });
 });
 
 describe("total likes", () => {
