@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const logger = require("./logger");
+const User = require("../models/user");
 
 // Middleware para extraer el token
 const tokenExtractor = (request, response, next) => {
@@ -11,12 +12,14 @@ const tokenExtractor = (request, response, next) => {
 };
 
 // Middleware para extraer y verificar el usuario basado en el token
-const userExtractor = (request, response, next) => {
+const userExtractor = async (request, response, next) => {
     try {
         const token = request.token;
         if (token) {
             const decodedToken = jwt.verify(token, process.env.SECRET);
-            request.user = decodedToken;
+            console.log("Decoded token:", decodedToken);
+            request.user = await User.findById(decodedToken.id);
+            console.log("User found:", request.user);
         } else {
             return response.status(401).json({ error: "Token missing or invalid" });
         }
