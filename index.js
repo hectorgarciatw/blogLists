@@ -42,6 +42,12 @@ mongoose
         process.exit(1);
     });
 
+// For the Playwright test - Exercise 5.18
+if (process.env.NODE_ENV === "test") {
+    const testingRouter = require("./routes/testing");
+    app.use("/api/testing", testingRouter);
+}
+
 // routes under /api/blogs
 app.use("/api/blogs", blogsRouter);
 //  routes under /api/users
