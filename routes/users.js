@@ -46,6 +46,40 @@ router.get("/", async (request, response, next) => {
     }
 });
 
+// Return the users with the number of the blogs created
+router.get("/users", async (request, response, next) => {
+    try {
+        const users = await User.aggregate([
+            {
+                $lookup: {
+                    from: "blogs",
+                    localField: "blogs",
+                    foreignField: "_id",
+                    as: "userBlogs",
+                },
+            },
+            {
+                $project: {
+                    _id: 1, // Incluimos el campo _id del usuario
+                    username: 1,
+                    blogCount: { $size: "$userBlogs" },
+                },
+            },
+        ]);
+
+        // Formateamos la respuesta incluyendo el id
+        response.json(
+            users.map((user) => ({
+                id: user._id, // Incluimos el id en el objeto de respuesta
+                username: user.username,
+                blogs: user.blogCount,
+            }))
+        );
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.post("/users", async (request, response, next) => {
     try {
         const { username, name, password } = request.body;
