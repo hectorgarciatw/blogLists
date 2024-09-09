@@ -60,17 +60,16 @@ router.get("/users", async (request, response, next) => {
             },
             {
                 $project: {
-                    _id: 1, // Incluimos el campo _id del usuario
+                    _id: 1,
                     username: 1,
                     blogCount: { $size: "$userBlogs" },
                 },
             },
         ]);
 
-        // Formateamos la respuesta incluyendo el id
         response.json(
             users.map((user) => ({
-                id: user._id, // Incluimos el id en el objeto de respuesta
+                id: user._id,
                 username: user.username,
                 blogs: user.blogCount,
             }))
@@ -84,7 +83,6 @@ router.post("/users", async (request, response, next) => {
     try {
         const { username, name, password } = request.body;
 
-        // Validación de campos
         if (!username || !password) {
             return response.status(400).json({ error: "Username and password are required" });
         }
