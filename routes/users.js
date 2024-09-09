@@ -5,6 +5,7 @@ const User = require("../models/user");
 
 const router = express.Router();
 
+//Implement the login logic
 router.post("/login", async (request, response, next) => {
     try {
         const { username, password } = request.body;
@@ -37,6 +38,7 @@ router.post("/login", async (request, response, next) => {
     }
 });
 
+//Get all the data
 router.get("/", async (request, response, next) => {
     try {
         const users = await User.find({}).populate("blogs", "title author url likes");
@@ -74,6 +76,25 @@ router.get("/users", async (request, response, next) => {
                 blogs: user.blogCount,
             }))
         );
+    } catch (error) {
+        next(error);
+    }
+});
+
+// Get all blogs for a specific user by their ID
+router.get("/users/:id", async (request, response, next) => {
+    try {
+        const userId = request.params.id;
+
+        // Encontrar el usuario por ID y poblar sus blogs
+        const user = await User.findById(userId).populate("blogs", "title author url likes");
+
+        if (!user) {
+            return response.status(404).json({ error: "User not found" });
+        }
+
+        // Responder con los datos completos del usuario, incluyendo los blogs
+        response.json(user); // Enviar todo el objeto de usuario
     } catch (error) {
         next(error);
     }

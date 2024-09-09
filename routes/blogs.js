@@ -18,6 +18,24 @@ router.get("/", async (request, response, next) => {
     }
 });
 
+// GET route of a blog by ID
+router.get("/:id", async (request, response, next) => {
+    try {
+        const { id } = request.params;
+
+        // Find the blog by its ID
+        const blog = await Blog.findById(id).populate("user", "username name");
+
+        if (!blog) {
+            return response.status(404).json({ error: "Blog not found" });
+        }
+
+        response.json(blog);
+    } catch (error) {
+        next(error);
+    }
+});
+
 // DELETE route to delete a blog by ID
 router.delete("/:id", async (request, response, next) => {
     try {
