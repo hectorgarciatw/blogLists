@@ -111,4 +111,33 @@ router.put("/:id/likes", async (request, response, next) => {
     }
 });
 
+// POST route to add a new comment to a blog
+router.post("/:id/comments", async (request, response, next) => {
+    try {
+        const { id } = request.params;
+        const { comment } = request.body;
+
+        // Verificar si se ha enviado un comentario
+        if (!comment) {
+            return response.status(400).json({ error: "Comment is required" });
+        }
+
+        // Encontrar el blog por ID y añadir el comentario al arreglo
+        const updatedBlog = await Blog.findByIdAndUpdate(
+            id,
+            { $push: { comments: comment } }, // Agregar comentario al arreglo
+            { new: true, runValidators: true }
+        );
+
+        if (!updatedBlog) {
+            return response.status(404).json({ error: "Blog not found" });
+        }
+
+        // Devolver el blog actualizado con el nuevo comentario
+        response.json(updatedBlog);
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = router;
